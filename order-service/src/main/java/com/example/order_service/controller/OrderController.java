@@ -1,7 +1,9 @@
 package com.example.order_service.controller;
 
 import com.example.order_service.dto.OrderRequest;
+import com.example.order_service.model.Order;
 import com.example.order_service.service.OrderService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -15,8 +17,15 @@ public class OrderController {
     private final OrderService orderService;
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public void placeOrder(@RequestBody OrderRequest orderRequest){
+    @CircuitBreaker(name = "inventory",fallbackMethod = "fallbackMethod")
+    public String placeOrder(@RequestBody OrderRequest orderRequest){
          orderService.placeOrder(orderRequest);
          log.info("Order placed successfully");
+         return "Order placed successfully";
+    }
+
+    public String fallbackMethod(OrderRequest orderRequest, RuntimeException exception){
+        log.info( "Something went wrong, come back after some time");
+        return "Something went wrong, come back after some time";
     }
 }
